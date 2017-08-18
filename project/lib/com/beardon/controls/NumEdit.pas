@@ -28,7 +28,7 @@ type
     property Value: Int64 read GetValue write SetValue;
   end;
 
- TFloatEdit = class(TEdit)
+  TFloatEdit = class(TEdit)
   private
     { Private declarations }
     function GetValue: Extended;
@@ -44,7 +44,7 @@ type
     property Value: Extended read GetValue write SetValue;
   end;
 
- TMoneyEdit = class(TEdit)
+  TMoneyEdit = class(TEdit)
   private
     { Private declarations }
     FFormatStr: string;
@@ -90,8 +90,10 @@ begin
 end;
 
 procedure TIntEdit.KeyPress(var Key: Char);
+const
+  VALID_KEYS = ['+', '-', '0'..'9', #8, #13];
 begin
-  if (not CharInSet(Key, ['+', '-', '0'..'9', #8,#13])) then
+  if (not CharInSet(Key, VALID_KEYS)) then
   begin
     Key := #0;
     MessageBeep(MB_ICONEXCLAMATION);
@@ -125,13 +127,17 @@ end;
 
 procedure TFloatEdit.SetValue(Value: Extended);
 begin
-  Text := FloatTostr(Value);
+  Text := FloatToStr(Value);
 end;
 
 procedure TFloatEdit.KeyPress(var Key: Char);
+const
+  VALID_KEYS = ['+', '-', '0'..'9', #0..#31];
 begin
-  if (not CharInSet(Key, ['+', '-', FormatSettings.DecimalSeparator, '0'..'9', #0..#31]))
+  if (not (CharInSet(Key, VALID_KEYS + [FormatSettings.DecimalSeparator])))
     or ((Key = FormatSettings.DecimalSeparator) and (Pos(FormatSettings.DecimalSeparator, Text) > 0))
+    or ((Key = '+') and ((SelStart > 0) or (Pos('+', Text) > 0)))
+    or ((Key = '-') and ((SelStart > 0) or (Pos('-', Text) > 0)))
   then
   begin
     Key := #0;
@@ -177,7 +183,7 @@ end;
 procedure TMoneyEdit.KeyPress(var Key: Char);
 const
   EDIT_KEYS = [#0..#31];
-  GOOD_KEYS = ['-','0'..'9'];
+  GOOD_KEYS = ['-', '0'..'9'];
 var
   ok: Boolean;
   valids: TSysCharSet;
@@ -194,7 +200,7 @@ begin
     ok := CharInSet(Key, valids);
     if (ok) then
     begin
-      if (key = FormatSettings.DecimalSeparator) then
+      if (Key = FormatSettings.DecimalSeparator) then
         ok := (SelStart >= (Length(Text) - 2))
       else
       begin
@@ -205,7 +211,7 @@ begin
         end;
       end;
     end;
-    if (not OK) then
+    if (not ok) then
     begin
       Key := #0;
       MessageBeep(MB_ICONEXCLAMATION);
